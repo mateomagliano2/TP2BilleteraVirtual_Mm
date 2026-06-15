@@ -1,17 +1,17 @@
 <template>
   <div>
-    <h2>Nueva Compra de Criptomoneda</h2>
-    <FormularioCompra />
+    <h2>Nueva Venta de Criptomoneda</h2>
+    <FormularioVenta />
   </div>
 </template>
 
 <script>
-import FormularioCompra from '../components/FormularioCompra.vue'
+import FormularioVenta from '../components/FormularioVenta.vue'
 
 export default {
-  name: 'NuevaCompraView',
+  name: 'NuevaVentaView',
   components: {
-    FormularioCompra
+    FormularioVenta
   }
 }
 </script>

@@ -1,36 +1,40 @@
 <template>
   <div class="contenedor">
-   <div class="formulario">
-    <form @submit.prevent="registrarCompra">
+  <div class="formulario">
+    <form @submit.prevent="registrarVenta">
 
 
       <div class="campo">
         <label for="cliente">Cliente:</label>
-        <select id="cliente" v-model="client_id" required>
-          <option disabled :value="null">Seleccionar cliente</option>
-          <option v-for="cliente in clientes" :key="cliente.id" :value="cliente.id">
-            {{ cliente.name }} / {{ cliente.email }}
+        <select id="cliente" v-model.number="client_id" required>
+          <option disabled :value="null"> Seleccionar cliente </option>
+          <option
+            v-for="cliente in clientes"
+            :key="cliente.id"
+            :value="cliente.id"
+          >
+            {{ cliente.name }} - {{ cliente.email }}
           </option>
         </select>
       </div>
 
-
       <div class="campo">
         <label for="crypto">Criptomoneda:</label>
         <select id="crypto" v-model="crypto_code" required>
-          <option value="" disabled>Seleccionar cripto</option>
+          <option disabled value=""> Seleccionar cripto </option>
           <option value="bitcoin">Bitcoin</option>
           <option value="ethereum">Ethereum</option>
           <option value="usdc">USDC</option>
         </select>
       </div>
 
+
       <div class="campo">
         <label for="cantidad">Cantidad:</label>
         <input
-          type="number"
           id="cantidad"
           v-model="crypto_amount"
+          type="number"
           step="0.00001"
           min="0.00001"
           placeholder="Ej: 0.00070"
@@ -52,19 +56,18 @@
       <p v-if="exito" class="mensaje-exito">{{ exito }}</p>
 
       <button type="submit" :disabled="cargando">
-        {{ cargando ? 'Guardando...' : 'Registrar Compra' }}
+        {{ cargando ? 'Guardando...' : 'Registrar Venta' }}
       </button>
-
     </form>
   </div>
-  </div>
+ </div>
 </template>
 
 <script>
 const API_URL = 'http://localhost:5076/api'
 
 export default {
-  name: 'FormularioCompra',
+  name: 'FormularioVenta',
   data() {
     return {
       clientes: [],
@@ -72,14 +75,13 @@ export default {
       crypto_code: '',
       crypto_amount: '',
       datetime: '',
-      action: 'purchase',
       error: '',
       exito: '',
       cargando: false
     }
   },
-  async mounted() {
-    await this.cargarClientes()
+  mounted() {
+    this.cargarClientes()
     this.datetime = new Date().toISOString().slice(0, 16)
   },
   methods: {
@@ -98,7 +100,7 @@ export default {
       }
     },
 
-    async registrarCompra() {
+    async registrarVenta() {
       this.error = ''
       this.exito = ''
 
@@ -124,7 +126,7 @@ export default {
 
       const datos = {
         crypto_code: this.crypto_code,
-        action: 'purchase',
+        action: 'sale',
         client_id: this.client_id,
         crypto_amount: this.crypto_amount.toString(),
         datetime: this.datetime
@@ -142,14 +144,14 @@ export default {
         })
 
         if (response.ok) {
-          this.exito = 'Compra registrada correctamente'
-          this.client_id = ''
+          this.exito = 'Venta registrada correctamente'
+          this.client_id = null
           this.crypto_code = ''
           this.crypto_amount = ''
-          this.datetime = ''
+          this.datetime = new Date().toISOString().slice(0, 16)
         } else {
           const mensaje = await response.text()
-          this.error = mensaje || 'Error al guardar la compra'
+          this.error = mensaje || 'Error al guardar la venta'
         }
       } catch (err) {
         console.log(err)
@@ -168,7 +170,7 @@ export default {
   padding: 25px;
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
+  max-width: 550px;
 }
 
 .campo {
@@ -177,40 +179,50 @@ export default {
 
 .campo label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
   font-weight: bold;
+  color: #333;
 }
 
 .campo select,
 .campo input {
   width: 100%;
-  padding: 8px;
+  padding: 9px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  font-size: 14px;
 }
 
 button {
-  background-color: #3498db;
+  background-color: #e67e22;
   color: white;
-  padding: 10px 20px;
+  padding: 10px 18px;
   border: none;
   border-radius: 4px;
-  width: 100%;
   cursor: pointer;
+  font-size: 15px;
+  width: 100%;
+}
+
+button:hover {
+  background-color: #d35400;
 }
 
 button:disabled {
   background-color: #95a5a6;
+  cursor: not-allowed;
 }
 
 .mensaje-error {
-  color: red;
+  color: #e74c3c;
   margin-top: 10px;
+  font-size: 14px;
 }
 
 .mensaje-exito {
-  color: green;
+  color: #27ae60;
   margin-top: 10px;
+  font-size: 14px;
 }
 .contenedor {
   display: flex;

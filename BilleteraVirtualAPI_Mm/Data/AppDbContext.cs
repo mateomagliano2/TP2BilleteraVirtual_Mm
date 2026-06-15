@@ -10,5 +10,7 @@ namespace BilleteraVirtualAPI_Mm.Data
         }
 
         public DbSet<TransaccionBV> TransaccionBVs { get; set; }
+        public DbSet<ClienteBV> ClienteBVs { get; set; }
+
     }
 }

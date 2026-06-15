@@ -1,7 +1,7 @@
 <template>
   <div class="historial">
 
-
+    <!-- Botón para cargar datos -->
     <div class="controles">
       <button @click="cargarMovimientos" :disabled="cargando">
         {{ cargando ? 'Cargando...' : 'Cargar Movimientos' }}
@@ -10,12 +10,13 @@
 
     <p v-if="error" class="mensaje-error">{{ error }}</p>
 
-
+    <!-- Tabla -->
     <div v-if="movimientos.length > 0" class="tabla-container">
       <table>
         <thead>
           <tr>
             <th>ID</th>
+            <th>Cliente</th>
             <th>Cripto</th>
             <th>Acción</th>
             <th>Cantidad</th>
@@ -24,18 +25,20 @@
             <th>Acciones</th>
           </tr>
         </thead>
+
         <tbody>
           <tr v-for="mov in movimientos" :key="mov.id">
             <td>{{ mov.id }}</td>
+            <td>{{ mov.client_name || mov.client_id }}</td>
             <td>{{ mov.crypto_code.toUpperCase() }}</td>
             <td>{{ mov.action === 'purchase' ? 'Compra' : 'Venta' }}</td>
             <td>{{ mov.crypto_amount }}</td>
-            <td>$ {{ mov.money }}</td>
+            <td>$ {{ formatearMonto(mov.money) }}</td>
             <td>{{ formatearFecha(mov.datetime) }}</td>
             <td class="acciones">
               <button class="btn-ver" @click="verDetalle(mov)">Ver</button>
               <button class="btn-editar" @click="editarMovimiento(mov)">Editar</button>
-              <button class="btn-eliminar" @click="eliminarMovimiento(mov.id)">Eliminar</button>
+              <button class="btn-eliminar" @click="confirmarEliminar(mov.id)">Eliminar</button>
             </td>
           </tr>
         </tbody>
@@ -45,18 +48,15 @@
     <p v-else-if="!cargando && consultado" class="sin-datos">
       No se encontraron movimientos.
     </p>
-
-
-    <div v-if="mostrarModal" class="modal-fondo" @click="mostrarModal = false">
+    <div v-if="mostrarModalEliminar" class="modal-fondo" @click="cerrarModalEliminar">
       <div class="modal-contenido" @click.stop>
-        <h3>Detalle de Transacción</h3>
-        <p><strong>ID:</strong> {{ detalle.id }}</p>
-        <p><strong>Criptomoneda:</strong> {{ detalle.crypto_code }}</p>
-        <p><strong>Acción:</strong> {{ detalle.action === 'purchase' ? 'Compra' : 'Venta' }}</p>
-        <p><strong>Cantidad:</strong> {{ detalle.crypto_amount }}</p>
-        <p><strong>Monto (ARS):</strong> $ {{ detalle.money }}</p>
-        <p><strong>Fecha:</strong> {{ formatearFecha(detalle.datetime) }}</p>
-        <button @click="mostrarModal = false">Cerrar</button>
+        <h3>Confirmar eliminación</h3>
+        <p>¿Seguro que quieres eliminar esta transacción?</p>
+
+        <div class="botones-modal">
+          <button class="btn-cancelar" @click="cerrarModalEliminar">Cancelar</button>
+          <button class="btn-confirmar" @click="eliminarMovimientoConfirmado">Eliminar</button>
+        </div>
       </div>
     </div>
 
@@ -74,9 +74,12 @@ export default {
       cargando: false,
       error: '',
       consultado: false,
-      mostrarModal: false,
-      detalle: {}
+      mostrarModalEliminar: false,
+      idAEliminar: null
     }
+  },
+  mounted() {
+    this.cargarMovimientos()
   },
   methods: {
     async cargarMovimientos() {
@@ -107,29 +110,41 @@ export default {
       return d.toLocaleString('es-AR')
     },
 
+    formatearMonto(valor) {
+      if (valor === null || valor === undefined || valor === '') return '-'
+      return Number(valor).toLocaleString('es-AR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })
+    },
+
     verDetalle(mov) {
-      this.detalle = mov
-      this.mostrarModal = true
+      this.$router.push('/transaccion/' + mov.id)
     },
 
     editarMovimiento(mov) {
-
-      alert('Funcionalidad de edicion en desarrollo - ID: ' + mov.id)
+      this.$router.push('/transaccion/editar/' + mov.id)
     },
 
-    async eliminarMovimiento(id) {
-      if (!confirm('¿Seguro que quiere eliminar esta transacción?')) {
-        return
-      }
+    confirmarEliminar(id) {
+      this.idAEliminar = id
+      this.mostrarModalEliminar = true
+    },
 
+    cerrarModalEliminar() {
+      this.mostrarModalEliminar = false
+      this.idAEliminar = null
+    },
+
+    async eliminarMovimientoConfirmado() {
       try {
-        const response = await fetch(API_URL + '/transactions/' + id, {
+        const response = await fetch(API_URL + '/transactions/' + this.idAEliminar, {
           method: 'DELETE'
         })
 
         if (response.ok) {
-          this.movimientos = this.movimientos.filter(m => m.id !== id)
-          alert('Transacción eliminada correctamente.')
+          this.movimientos = this.movimientos.filter(m => m.id !== this.idAEliminar)
+          this.cerrarModalEliminar()
         } else {
           alert('Error al eliminar.')
         }
@@ -168,6 +183,15 @@ export default {
   background-color: #2980b9;
 }
 
+.controles button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.tabla-container {
+  overflow-x: auto;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -192,6 +216,7 @@ tr:hover {
 .acciones {
   display: flex;
   gap: 5px;
+  flex-wrap: wrap;
 }
 
 .btn-ver {
@@ -278,17 +303,36 @@ tr:hover {
   margin-bottom: 8px;
 }
 
-.modal-contenido button {
+.botones-modal {
   margin-top: 15px;
-  background-color: #3498db;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-cancelar {
+  background-color: #95a5a6;
   color: white;
-  padding: 8px 16px;
+  padding: 8px 14px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
-.modal-contenido button:hover {
-  background-color: #2980b9;
+.btn-confirmar {
+  background-color: #e74c3c;
+  color: white;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-cancelar:hover {
+  background-color: #7f8c8d;
+}
+
+.btn-confirmar:hover {
+  background-color: #c0392b;
 }
 </style>
