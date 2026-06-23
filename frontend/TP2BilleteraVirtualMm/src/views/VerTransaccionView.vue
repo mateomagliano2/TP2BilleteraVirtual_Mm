@@ -19,7 +19,7 @@
 </template>
 
 <script>
-const API_URL = 'http://localhost:5076/api'
+import api from '../services/api.js'
 
 export default {
   name: 'VerTransaccionView',
@@ -32,10 +32,8 @@ export default {
     const id = this.$route.params.id
 
     try {
-      const response = await fetch(API_URL + '/transactions/' + id)
-      if (response.ok) {
-        this.transaccion = await response.json()
-      }
+      const response = await api.get('/transactions/' + id)
+      this.transaccion = response.data
     } catch (error) {
       console.log(error)
     }

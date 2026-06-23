@@ -60,7 +60,7 @@
 </template>
 
 <script>
-const API_URL = 'http://localhost:5076/api'
+import api from '@/services/api'
 
 export default {
   name: 'EditarTransaccionView',
@@ -72,56 +72,54 @@ export default {
       clientes: []
     }
   },
+
   async mounted() {
     const id = this.$route.params.id
 
     try {
-      const response = await fetch(API_URL + '/transactions/' + id)
 
-      if (response.ok) {
-        const data = await response.json()
-        data.datetimeLocal = new Date(data.datetime).toISOString().slice(0, 16)
-        this.transaccion = data
-      }
-      const resClientes = await fetch(API_URL + '/clientesbv')
-      if (resClientes.ok) {
-        this.clientes = await resClientes.json()
-      }
+      const res = await api.get(`/transactions/${id}`)
+      const data = res.data
+
+      data.datetimeLocal = new Date(data.datetime).toISOString().slice(0, 16)
+      this.transaccion = data
+
+
+      const resClientes = await api.get('/clientesbv')
+      this.clientes = resClientes.data
+
     } catch (error) {
       console.log(error)
       this.error = 'Error al cargar la transacción'
     }
   },
+
   methods: {
     async guardarCambios() {
       this.error = ''
       this.ok = false
 
       try {
-        const response = await fetch(API_URL + '/transactions/' + this.transaccion.id, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            crypto_code: this.transaccion.crypto_code,
-            action: this.transaccion.action,
-            crypto_amount: this.transaccion.crypto_amount,
-            client_id: this.transaccion.client_id,
-            money: this.transaccion.money,
-            datetime: this.transaccion.datetimeLocal
-          })
+        await api.patch(`/transactions/${this.transaccion.id}`, {
+          crypto_code: this.transaccion.crypto_code,
+          action: this.transaccion.action,
+          crypto_amount: this.transaccion.crypto_amount,
+          client_id: this.transaccion.client_id,
+          money: this.transaccion.money,
+          datetime: this.transaccion.datetimeLocal
         })
 
-        if (response.ok) {
-          this.ok = true
-        } else {
-          const mensaje = await response.text()
-          this.error = mensaje || 'Error al actualizar'
-        }
+
+        this.ok = true
+
       } catch (error) {
         console.log(error)
-        this.error = 'No se pudo conectar con el backend'
+
+        if (error.response) {
+          this.error = error.response.data || 'Error al actualizar'
+        } else {
+          this.error = 'No se pudo conectar con el backend'
+        }
       }
     }
   }
