@@ -60,8 +60,7 @@
   </div>
 </template>
 
-<script>
-const API_URL = 'http://localhost:5076/api'
+<script>import api from '../services/api'
 
 export default {
   name: 'FormularioCompra',
@@ -78,47 +77,44 @@ export default {
       cargando: false
     }
   },
+
   async mounted() {
     await this.cargarClientes()
     this.datetime = new Date().toISOString().slice(0, 16)
   },
+
   methods: {
     async cargarClientes() {
       try {
-        const response = await fetch(API_URL + '/clientesbv')
-
-        if (response.ok) {
-          this.clientes = await response.json()
-        } else {
-          this.error = 'No se pudieron cargar los clientes'
-        }
+        const res = await api.get('/clientesbv')
+        this.clientes = res.data
       } catch (err) {
         console.log(err)
         this.error = 'Error al conectar con la API de clientes'
       }
+    },
+    validarFormulario() {
+      if (!this.client_id) return 'Debe seleccionar un cliente'
+
+      if (!this.crypto_code) return 'Debe seleccionar una criptomoneda'
+
+      if (!this.crypto_amount || parseFloat(this.crypto_amount) <= 0) {
+        return 'La cantidad debe ser mayor a 0'
+      }
+
+      if (!this.datetime) return 'Debe ingresar fecha y hora'
+
+      return null
     },
 
     async registrarCompra() {
       this.error = ''
       this.exito = ''
 
-      if (!this.client_id) {
-        this.error = 'Debe seleccionar un cliente'
-        return
-      }
+      const errorValidacion = this.validarFormulario()
 
-      if (!this.crypto_code) {
-        this.error = 'Debe seleccionar una criptomoneda'
-        return
-      }
-
-      if (!this.crypto_amount || parseFloat(this.crypto_amount) <= 0) {
-        this.error = 'La cantidad debe ser mayor a 0'
-        return
-      }
-
-      if (!this.datetime) {
-        this.error = 'Debe ingresar fecha y hora'
+      if (errorValidacion) {
+        this.error = errorValidacion
         return
       }
 
@@ -133,27 +129,23 @@ export default {
       try {
         this.cargando = true
 
-        const response = await fetch(API_URL + '/transactions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(datos)
-        })
+        await api.post('/transactions', datos)
 
-        if (response.ok) {
-          this.exito = 'Compra registrada correctamente'
-          this.client_id = ''
-          this.crypto_code = ''
-          this.crypto_amount = ''
-          this.datetime = ''
-        } else {
-          const mensaje = await response.text()
-          this.error = mensaje || 'Error al guardar la compra'
-        }
+        this.exito = 'Compra registrada correctamente'
+
+        this.client_id = null
+        this.crypto_code = ''
+        this.crypto_amount = ''
+        this.datetime = new Date().toISOString().slice(0, 16)
+
       } catch (err) {
         console.log(err)
-        this.error = 'No se pudo conectar con el backend'
+
+        if (err.response) {
+          this.error = err.response.data || 'Error al guardar la compra'
+        } else {
+          this.error = 'No se pudo conectar con el backend'
+        }
       } finally {
         this.cargando = false
       }

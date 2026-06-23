@@ -67,18 +67,16 @@ export default {
       try {
         this.cargando = true
 
-        const res = await api.post('/clientesbv', {
+        await api.post('/clientesbv', {
           name: this.name,
           email: this.email
         })
 
-        if (res.ok) {
+
           this.ok = true
           this.name = ''
           this.email = ''
-        } else {
-          this.error = 'Error al guardar'
-        }
+
       } catch (e) {
         console.log(e)
         this.error = 'No conecta con backend'
