@@ -53,7 +53,7 @@
 </template>
 
 <script>
-const API_URL = 'http://localhost:5076/api'
+import api from '../services/api.js'
 
 export default {
   name: 'TablaClientes',
@@ -75,8 +75,8 @@ export default {
       this.error = ''
 
       try {
-        const res = await fetch(API_URL + '/clientesbv')
-        this.clientes = await res.json()
+        const res = await api.get('/clientesbv')
+        this.clientes = res.data
       } catch (err) {
         console.log(err)
         this.error = 'Error al cargar clientes'
@@ -101,9 +101,7 @@ export default {
 
     async eliminarCliente() {
       try {
-        await fetch(API_URL + '/clientesbv/' + this.idAEliminar, {
-          method: 'DELETE'
-        })
+        await api.delete('/clientesbv/' + this.idAEliminar)
 
         this.clientes = this.clientes.filter(c => c.id !== this.idAEliminar)
         this.cerrarModal()

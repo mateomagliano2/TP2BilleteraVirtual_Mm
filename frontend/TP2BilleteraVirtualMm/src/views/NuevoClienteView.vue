@@ -36,7 +36,7 @@
 </template>
 
 <script>
-const API_URL = 'http://localhost:5076/api'
+import api from '../services/api.js'
 
 export default {
   name: 'NuevoClienteView',
@@ -67,13 +67,9 @@ export default {
       try {
         this.cargando = true
 
-        const res = await fetch(API_URL + '/clientesbv', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: this.name,
-            email: this.email
-          })
+        const res = await api.post('/clientesbv', {
+          name: this.name,
+          email: this.email
         })
 
         if (res.ok) {
