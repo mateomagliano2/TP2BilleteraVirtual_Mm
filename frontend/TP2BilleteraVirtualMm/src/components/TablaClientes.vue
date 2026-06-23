@@ -38,7 +38,6 @@
 
     <p v-else-if="!cargando" class="sin-datos">No hay clientes.</p>
 
-    <!-- Modal -->
     <div v-if="mostrarModal" class="modal-fondo" @click="cerrarModal">
       <div class="modal-contenido" @click.stop>
         <h3>Confirmar eliminación</h3>

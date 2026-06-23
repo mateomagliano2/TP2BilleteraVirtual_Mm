@@ -1,16 +1,12 @@
 <template>
   <div class="historial">
-
-    <!-- Botón para cargar datos -->
     <div class="controles">
       <button @click="cargarMovimientos" :disabled="cargando">
         {{ cargando ? 'Cargando...' : 'Cargar Movimientos' }}
       </button>
     </div>
-
     <p v-if="error" class="mensaje-error">{{ error }}</p>
 
-    <!-- Tabla -->
     <div v-if="movimientos.length > 0" class="tabla-container">
       <table>
         <thead>
