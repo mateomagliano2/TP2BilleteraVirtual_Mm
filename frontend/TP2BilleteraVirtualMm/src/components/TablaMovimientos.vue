@@ -60,7 +60,7 @@
 </template>
 
 <script>
-const API_URL = 'http://localhost:5076/api'
+import api from '../services/api'
 
 export default {
   name: 'TablaMovimientos',
@@ -74,9 +74,11 @@ export default {
       idAEliminar: null
     }
   },
+
   mounted() {
     this.cargarMovimientos()
   },
+
   methods: {
     async cargarMovimientos() {
       this.cargando = true
@@ -84,16 +86,11 @@ export default {
       this.consultado = false
 
       try {
-        const response = await fetch(API_URL + '/transactions')
-
-        if (response.ok) {
-          this.movimientos = await response.json()
-        } else {
-          this.error = 'Error al obtener los movimientos.'
-        }
+        const res = await api.get('/transactions')
+        this.movimientos = res.data
       } catch (err) {
         console.log('Error:', err)
-        this.error = 'No se pudo conectar con el servidor.'
+        this.error = 'No se pudo obtener los movimientos.'
       } finally {
         this.cargando = false
         this.consultado = true
@@ -134,19 +131,15 @@ export default {
 
     async eliminarMovimientoConfirmado() {
       try {
-        const response = await fetch(API_URL + '/transactions/' + this.idAEliminar, {
-          method: 'DELETE'
-        })
+        await api.delete(`/transactions/${this.idAEliminar}`)
 
-        if (response.ok) {
-          this.movimientos = this.movimientos.filter(m => m.id !== this.idAEliminar)
-          this.cerrarModalEliminar()
-        } else {
-          alert('Error al eliminar.')
-        }
+        // ✅ actualizar UI
+        this.movimientos = this.movimientos.filter(m => m.id !== this.idAEliminar)
+
+        this.cerrarModalEliminar()
       } catch (err) {
         console.log('Error:', err)
-        alert('No se pudo conectar con el servidor.')
+        alert('No se pudo eliminar.')
       }
     }
   }

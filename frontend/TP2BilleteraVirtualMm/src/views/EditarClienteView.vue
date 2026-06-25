@@ -36,7 +36,7 @@
 </template>
 
 <script>
-const API_URL = 'http://localhost:5076/api'
+import api from '@/services/api'
 
 export default {
   name: 'EditarClienteView',
@@ -53,10 +53,11 @@ export default {
     const id = this.$route.params.id
 
     try {
-      const res = await fetch(API_URL + '/clientesbv')
-      const lista = await res.json()
+      const res = await api.get('/clientesbv')
+      const lista = res.data
 
       this.cliente = lista.find(c => c.id == id)
+
     } catch (err) {
       console.log(err)
       this.error = 'Error al cargar cliente'
@@ -81,23 +82,19 @@ export default {
       try {
         this.cargando = true
 
-        const res = await fetch(API_URL + '/clientesbv/' + this.cliente.id, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(this.cliente)
-        })
+        await api.put(`/clientesbv/${this.cliente.id}`, this.cliente)
 
-        if (res.ok) {
-          this.ok = true
-        } else {
-          this.error = 'Error al guardar cambios'
-        }
+        // ✅ SI LLEGA ACÁ → OK
+        this.ok = true
 
       } catch (err) {
         console.log(err)
-        this.error = 'No se pudo conectar con el backend'
+
+        if (err.response) {
+          this.error = err.response.data || 'Error al guardar cambios'
+        } else {
+          this.error = 'No se pudo conectar con el backend'
+        }
       } finally {
         this.cargando = false
       }

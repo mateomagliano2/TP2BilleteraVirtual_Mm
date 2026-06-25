@@ -60,7 +60,9 @@
   </div>
 </template>
 
-<script>import api from '../services/api'
+<script>
+
+import api from '../services/api'
 
 export default {
   name: 'FormularioCompra',

@@ -64,7 +64,7 @@
 </template>
 
 <script>
-const API_URL = 'http://localhost:5076/api'
+import api from '../services/api'
 
 export default {
   name: 'FormularioVenta',
@@ -80,20 +80,17 @@ export default {
       cargando: false
     }
   },
+
   mounted() {
     this.cargarClientes()
     this.datetime = new Date().toISOString().slice(0, 16)
   },
+
   methods: {
     async cargarClientes() {
       try {
-        const response = await fetch(API_URL + '/clientesbv')
-
-        if (response.ok) {
-          this.clientes = await response.json()
-        } else {
-          this.error = 'No se pudieron cargar los clientes'
-        }
+        const res = await api.get('/clientesbv')
+        this.clientes = res.data
       } catch (err) {
         console.log(err)
         this.error = 'Error al conectar con la API de clientes'
@@ -135,27 +132,23 @@ export default {
       try {
         this.cargando = true
 
-        const response = await fetch(API_URL + '/transactions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(datos)
-        })
+        await api.post('/transactions', datos)
 
-        if (response.ok) {
-          this.exito = 'Venta registrada correctamente'
-          this.client_id = null
-          this.crypto_code = ''
-          this.crypto_amount = ''
-          this.datetime = new Date().toISOString().slice(0, 16)
-        } else {
-          const mensaje = await response.text()
-          this.error = mensaje || 'Error al guardar la venta'
-        }
+        this.exito = 'Venta registrada correctamente'
+
+        this.client_id = null
+        this.crypto_code = ''
+        this.crypto_amount = ''
+        this.datetime = new Date().toISOString().slice(0, 16)
+
       } catch (err) {
         console.log(err)
-        this.error = 'No se pudo conectar con el backend'
+
+        if (err.response) {
+          this.error = err.response.data || 'Error al guardar la venta'
+        } else {
+          this.error = 'No se pudo conectar con el backend'
+        }
       } finally {
         this.cargando = false
       }
