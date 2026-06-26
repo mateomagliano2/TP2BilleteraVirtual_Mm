@@ -83,8 +83,6 @@ export default {
         this.cargando = true
 
         await api.put(`/clientesbv/${this.cliente.id}`, this.cliente)
-
-        // ✅ SI LLEGA ACÁ → OK
         this.ok = true
 
       } catch (err) {
