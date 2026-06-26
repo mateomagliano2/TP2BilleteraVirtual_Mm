@@ -1,13 +1,13 @@
 <template>
   <div class="historial">
     <div class="controles">
-      <button @click="cargarMovimientos" :disabled="cargando">
-        {{ cargando ? 'Cargando...' : 'Cargar Movimientos' }}
+      <button @click="store.cargarMovimientos" :disabled="store.cargando">
+        {{ store.cargando ? 'Cargando...' : 'Cargar Movimientos' }}
       </button>
     </div>
-    <p v-if="error" class="mensaje-error">{{ error }}</p>
+    <p v-if="store.error" class="mensaje-error">{{ store.error }}</p>
 
-    <div v-if="movimientos.length > 0" class="tabla-container">
+    <div v-if="store.movimientos.length > 0" class="tabla-container">
       <table>
         <thead>
           <tr>
@@ -23,7 +23,7 @@
         </thead>
 
         <tbody>
-          <tr v-for="mov in movimientos" :key="mov.id">
+          <tr v-for="mov in store.movimientos" :key="mov.id">
             <td>{{ mov.id }}</td>
             <td>{{ mov.client_name || mov.client_id }}</td>
             <td>{{ mov.crypto_code.toUpperCase() }}</td>
@@ -41,7 +41,7 @@
       </table>
     </div>
 
-    <p v-else-if="!cargando && consultado" class="sin-datos">
+    <p v-else-if="!store.cargando && store.consultado" class="sin-datos">
       No se encontraron movimientos.
     </p>
     <div v-if="mostrarModalEliminar" class="modal-fondo" @click="cerrarModalEliminar">
@@ -60,43 +60,31 @@
 </template>
 
 <script>
-import api from '../services/api'
+import { useTransactionStore } from '@/stores/transactionStore'
 
 export default {
   name: 'TablaMovimientos',
+
   data() {
     return {
-      movimientos: [],
-      cargando: false,
-      error: '',
-      consultado: false,
       mostrarModalEliminar: false,
       idAEliminar: null
     }
   },
 
-  mounted() {
-    this.cargarMovimientos()
+  computed: {
+    store() {
+      return useTransactionStore()
+    }
+  },
+
+  async mounted() {
+    if (this.store.movimientos.length === 0) {
+      await this.store.cargarMovimientos()
+    }
   },
 
   methods: {
-    async cargarMovimientos() {
-      this.cargando = true
-      this.error = ''
-      this.consultado = false
-
-      try {
-        const res = await api.get('/transactions')
-        this.movimientos = res.data
-      } catch (err) {
-        console.log('Error:', err)
-        this.error = 'No se pudo obtener los movimientos.'
-      } finally {
-        this.cargando = false
-        this.consultado = true
-      }
-    },
-
     formatearFecha(fecha) {
       if (!fecha) return '-'
       const d = new Date(fecha)
@@ -131,14 +119,10 @@ export default {
 
     async eliminarMovimientoConfirmado() {
       try {
-        await api.delete(`/transactions/${this.idAEliminar}`)
-
-        // ✅ actualizar UI
-        this.movimientos = this.movimientos.filter(m => m.id !== this.idAEliminar)
-
+        await this.store.eliminarMovimiento(this.idAEliminar)
         this.cerrarModalEliminar()
       } catch (err) {
-        console.log('Error:', err)
+        console.log(err)
         alert('No se pudo eliminar.')
       }
     }
